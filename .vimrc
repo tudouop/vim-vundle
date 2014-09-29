@@ -19,6 +19,8 @@ Plugin 'scrooloose/syntastic'
 Plugin 'plasticboy/vim-markdown'
 Plugin 'altercation/vim-colors-solarized'
 Plugin 'tpope/vim-surround'
+Plugin 'kien/ctrlp.vim'
+Plugin 'scrooloose/nerdtree'
 
 call vundle#end()            " required
 filetype plugin indent on    " required
@@ -40,7 +42,7 @@ if version >= 603
 endif
 
 """"""""" 新文件标题 """""""""""
-autocmd BufNewFile *.py,*.sh,*.c exec ":call SetTitle()"
+autocmd BufNewFile *.pl,*.py,*.sh,*.c exec ":call SetTitle()"
 func SetTitle()
 	if &filetype == 'sh' 
 		call setline(1,"\########################################")
@@ -57,17 +59,53 @@ func SetTitle()
 		call append(line("."), "\# File Name: ".expand("%"))
 		call append(line(".")+1, "\# Author: Marco Lu")
 		call append(line(".")+2, "\# Mail: pqlu@tudou.com")
-		call append(line(".")+3, "\# Created Time: ".strftime("%c"))
-		call append(line(".")+4, "\########################################")
-		call append(line(".")+5, "\#!/usr/bin/python")
+		call append(line(".")+3, "\# Created Time: ".strftime("%Y-%m-%d %H:%M"))
+		call append(line(".")+4, "\# Last modified: ".strftime("%Y-%m-%d %H:%M"))
+		call append(line(".")+5, "\########################################")
 		call append(line(".")+6, "")
+		call append(line(".")+7, "\#!/usr/bin/env python")
+		call append(line(".")+8, "\# coding=utf-8")
+		call append(line(".")+9, "")
+	endif
+	if &filetype == 'perl'
+		call setline(1,"\########################################")
+		call append(line("."), "\# File Name: ".expand("%"))
+		call append(line(".")+1, "\# Author: Marco Lu")
+		call append(line(".")+2, "\# Mail: pqlu@tudou.com")
+		call append(line(".")+3, "\# Created Time: ".strftime("%Y-%m-%d %H:%M"))
+		call append(line(".")+4, "\# Last modified: ".strftime("%Y-%m-%d %H:%M"))
+		call append(line(".")+5, "\########################################")
+		call append(line(".")+6, "")
+		call append(line(".")+7, "\#!/usr/bin/env perl")
+		call append(line(".")+8, "")
 	endif
 	if &filetype == 'c'
-		call setline(1, "#include<stdio.h>")
+		call setline(1, "#include <stdio.h>")
 		call append(line("."), "")
 	endif
+
 	autocmd BufNewFile * normal G
 endfunc
+
+autocmd BufWrite,BufWritePre,FileWritePre * exec ":call ModifyTime()"
+
+function ModifyTime()
+	let n=1
+	while n < 10
+		let line = getline(n)
+		if line =~ '^\#\sLast\smodified:\S*.*$'
+			execute '/# Last modified:/s@:.*$@\=strftime(":\t%Y-%m-%d %H:%M")@'
+			return
+		endif
+		let n = n + 1
+	endwhile
+	call AddTitle()
+
+	if &filetype == 'python'
+		autocmd BufWritePre * :%s/\s\+$//ge
+		setlocal textwidth=80
+	endif
+endfunction
 
 """"""""" 实用设置 """"""""""
 set tabstop=4						"设置Tab键宽度
@@ -79,3 +117,12 @@ set statusline=%F%m%r%h%w\ [FORMAT=%{&ff}]\ [TYPE=%Y]\ [POS=%l,%v]\ [%p%%]\ %{st
 
 """"""""" 快捷键设置 """"""""""
 map <C-a> ggVGY 					"ctrl+a 全选复制
+map <C-n> :NERDTreeToggle<CR>		"ctrl+n 开启Nerdtree
+
+""""""""" Python设置 """"""""""
+
+""""""""" 插件设置 """"""""""
+"NERDTree -- 开启不带文件名时自动打开
+autocmd StdinReadPre * let s:std_in=1
+autocmd VimEnter * if argc() == 0 && !exists("s:std_in") | NERDTree | endif
+"autocmd vimenter * NERDTree  "NERDTree -- 每次自动开启
